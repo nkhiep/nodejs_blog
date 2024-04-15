@@ -1,5 +1,6 @@
 const Course = require("../models/Course");
 const { mongooseToObject } = require("../../util/mongoose");
+const { MongoBulkWriteError } = require("mongodb");
 
 class CourseController {
     // [GET] /courses/:slug
@@ -34,8 +35,22 @@ class CourseController {
             .catch(next);
     }
 
+    // [PATCH] /courses/:id/restore
+    restore(req, res, next) {
+        Course.restore({ _id: req.params.id })
+            .then(() => res.redirect("back"))
+            .catch(next);
+    }
+
     // [DELETE] /courses/:id
     delete(req, res, next) {
+        Course.delete({ _id: req.params.id })
+            .then(() => res.redirect("back"))
+            .catch(next);
+    }
+
+    // [DELETE] /courses/:id
+    forceDelete(req, res, next) {
         Course.deleteOne({ _id: req.params.id })
             .then(() => res.redirect("back"))
             .catch(next);
@@ -45,9 +60,9 @@ class CourseController {
     store(req, res, next) {
         const formData = req.body;
         formData.image = `https://i.ytimg.com/an_webp/${formData.videoId}/mqdefault_6s.webp?du=3000&sqp=CNjd07AG&rs=AOn4CLAPBnORa-3Sl6CeikbfYcy6a36B3Q`;
-        course
-            .save()
-            .then(() => res.redirect("/"))
+        const course = new Course(formData)
+        course.save()
+            .then(() => res.redirect("/me/stored/courses"))
             .catch((error) => {});
     }
 }
